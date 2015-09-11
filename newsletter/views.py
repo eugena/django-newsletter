@@ -240,14 +240,6 @@ class ActionMixin(ProcessUrlDataMixin):
                 )
 
 
-class ActionTemplateView(NewsletterMixin, ActionMixin, TemplateView):
-    """
-    View that renders a template for proper action,
-    with newsletter and action in context.
-    """
-    pass
-
-
 class ActionFormView(NewsletterMixin, ActionMixin, FormView):
     """ FormView with newsletter and action support. """
 
@@ -266,7 +258,7 @@ class ActionFormView(NewsletterMixin, ActionMixin, FormView):
         )
 
 
-class ActionUserView(ActionTemplateView):
+class ActionUserView(NewsletterMixin, ActionMixin, TemplateView):
     """ Base class for subscribe and unsubscribe user views. """
     template_name = "newsletter/subscription_%(action)s_user.html"
 
