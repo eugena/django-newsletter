@@ -348,9 +348,7 @@ class SubscriptionAdmin(admin.ModelAdmin, ExtendibleModelAdminMixin):
         'name_field', 'email_field', 'user__first_name', 'user__last_name',
         'user__email'
     )
-    readonly_fields = (
-        'ip', 'subscribe_date', 'unsubscribe_date', 'activation_code'
-    )
+    readonly_fields = ('ip', 'subscribe_date', 'unsubscribe_date')
     date_hierarchy = 'subscribe_date'
     actions = ['make_subscribed', 'make_unsubscribed']
     exclude = ['unsubscribed']

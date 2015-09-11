@@ -15,9 +15,7 @@ from django.utils.timezone import now
 
 from sorl.thumbnail import ImageField
 
-from .utils import (
-    make_activation_code, get_default_sites, ACTIONS
-)
+from .utils import get_default_sites, ACTIONS
 
 logger = logging.getLogger(__name__)
 
@@ -296,11 +294,6 @@ class Subscription(models.Model):
     newsletter = models.ForeignKey('Newsletter', verbose_name=_('newsletter'))
 
     create_date = models.DateTimeField(editable=False, default=now)
-
-    activation_code = models.CharField(
-        verbose_name=_('activation code'), max_length=40,
-        default=make_activation_code
-    )
 
     subscribed = models.BooleanField(
         default=False, verbose_name=_('subscribed'), db_index=True
