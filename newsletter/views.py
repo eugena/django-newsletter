@@ -34,11 +34,13 @@ from django.forms.models import modelformset_factory
 
 from .models import Newsletter, Subscription, Submission
 from .forms import (
-    SubscribeRequestForm, UserUpdateForm, UpdateRequestForm,
-    UnsubscribeRequestForm, UpdateForm
+    SubscribeRequestForm, UserUpdateForm,
+    UpdateRequestForm, UnsubscribeRequestForm
 )
 from .settings import newsletter_settings
-from .utils import ACTIONS
+from .utils import ACTIONS, Signer
+
+newsletter_signer = Signer(salt='newsletter')
 
 
 class NewsletterViewBase(object):
@@ -468,51 +470,40 @@ class UpdateRequestView(ActionRequestView):
 
 
 class UpdateSubscriptionView(ActionMixin):
-    form_class = UpdateForm
     template_name = "newsletter/subscription_activate.html"
 
-    def process_url_data(self, *args, **kwargs):
-        """
-        Add email, subscription and activation_code
-        to instance attributes.
-        """
-        assert 'email' in kwargs
+    def post(self, request, **kwargs):
+        activation_code = kwargs.get('activation_code')
 
-        super(UpdateSubscriptionView, self).process_url_data(*args, **kwargs)
+        # TODO: Catch exceptions! (expiration, modified)
+        data = newsletter_signer.validate(activation_code)
 
-        self.subscription = get_object_or_404(
-            Subscription, newsletter=self.newsletter,
-            email_field__exact=kwargs['email']
-        )
-        # activation_code is optional kwarg which defaults to None
-        self.activation_code = kwargs.get('activation_code')
+        # Checking values
+        if (
+            self.newsletter.newsletter_slug != data['newsletter_slug'] or
+            self.action != data['action']
+        ):
+            # URL has been tampered with
+            raise NotImplementedError()
 
-    def get_initial(self):
-        """ Returns the initial data to use for forms on this view. """
-        if self.activation_code:
-            return {'user_activation_code': self.activation_code}
-        else:
-            # TODO: Test coverage of this branch
-            return None
+        # Get subscription
+        try:
+            subscription = Subscription.objects.get(
+                newsletter=self.newsletter, email_field__exact=data['email'])
+        except Subscription.DoesNotExist:
+            raise NotImplementedError()
 
-    def get_form_kwargs(self):
-        """ Add instance to form kwargs. """
-        kwargs = super(UpdateSubscriptionView, self).get_form_kwargs()
+        if data['action'] == 'update':
+            if 'new_email' in data:
+                subscription.email_field = data['new_email']
 
-        kwargs['instance'] = self.subscription
+            else:
+                # No new email has been set, present user with form for update
+                raise NotImplementedError()
 
-        return kwargs
 
-    def get_success_url(self):
-        return self.get_url_from_viewname('newsletter_action_activated')
-
-    def form_valid(self, form):
-        """ Get our instance, but do not save yet. """
-        subscription = form.save(commit=False)
-
+        # Activate subscription
         subscription.update(self.action)
-
-        return super(UpdateSubscriptionView, self).form_valid(form)
 
 
 class SubmissionViewBase(NewsletterMixin):

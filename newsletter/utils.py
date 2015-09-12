@@ -8,6 +8,7 @@ import random
 from datetime import datetime
 from hashlib import sha1
 
+from django.core import signing
 from django.contrib.sites.models import Site
 from django.utils.encoding import force_bytes
 
@@ -46,3 +47,19 @@ class Singleton(type):
             )
 
         return cls._instances[cls]
+
+
+class Signer(object):
+    """
+    Base class for newsletter signers allowing easy overriding
+    salt and MAX_AGE.
+    """
+    def __init__(self, salt, max_age=86400):
+        self.salt = salt
+        self.max_age = max_age
+
+    def generate(self, **kwargs):
+        return signing.dumps(kwargs, salt=self.salt, compress=True)
+
+    def validate(self, token):
+        return signing.loads(token, salt=self.salt, max_age=self.max_age)
