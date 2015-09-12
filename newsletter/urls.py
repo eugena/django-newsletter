@@ -53,8 +53,7 @@ urlpatterns = [
 
     # Action confirmation views
     surl(
-        '^<newsletter_slug:s>/subscription/'
-        '<action=subscribe|update|unsubscribe>/activate/<activation_code:s>/$',
+        '^/activate/<activation_code:s>/$',
         UpdateSubscriptionView.as_view(), name='newsletter_update_activate'
     ),
 
