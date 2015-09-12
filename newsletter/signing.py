@@ -19,6 +19,4 @@ class Signer(object):
         return signing.loads(token, salt=self.salt, max_age=self.max_age)
 
 
-subscribe_signer = Signer(salt='newsletter_subcsribe')
-unsubscribe_signer = Signer(salt='newsletter_unsubscribe')
-update_signer = Signer(salt='newsletter_update')
+newsletter_signer = Signer(salt='newsletter')
