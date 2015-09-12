@@ -239,10 +239,6 @@ class ActionMixin(ProcessUrlDataMixin):
                     }
                 )
 
-
-class ActionFormView(NewsletterMixin, ActionMixin, FormView):
-    """ FormView with newsletter and action support. """
-
     def get_url_from_viewname(self, viewname):
         """
         Return url for given `viename`
@@ -258,7 +254,7 @@ class ActionFormView(NewsletterMixin, ActionMixin, FormView):
         )
 
 
-class ActionUserView(NewsletterMixin, ActionMixin, TemplateView):
+class ActionUserView(ActionMixin, TemplateView):
     """ Base class for subscribe and unsubscribe user views. """
     template_name = "newsletter/subscription_%(action)s_user.html"
 
@@ -356,7 +352,7 @@ class UnsubscribeUserView(ActionUserView):
         return super(UnsubscribeUserView, self).get(request, *args, **kwargs)
 
 
-class ActionRequestView(ActionFormView):
+class ActionRequestView(ActionMixin, FormView):
     """ Base class for subscribe, unsubscribe and update request views. """
     template_name = "newsletter/subscription_%(action)s.html"
 
@@ -471,7 +467,7 @@ class UpdateRequestView(ActionRequestView):
         return redirect(self.subscription.update_activate_url())
 
 
-class UpdateSubscriptionView(ActionFormView):
+class UpdateSubscriptionView(ActionMixin):
     form_class = UpdateForm
     template_name = "newsletter/subscription_activate.html"
 
