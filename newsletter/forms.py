@@ -150,26 +150,6 @@ class UnsubscribeRequestForm(UpdateRequestForm):
         return super(UnsubscribeRequestForm, self).clean()
 
 
-class UpdateForm(NewsletterForm):
-    """
-    This form allows one to actually update to or unsubscribe from the
-    newsletter. To do this, a correct activation code is required.
-    """
-    def clean_user_activation_code(self):
-        data = self.cleaned_data['user_activation_code']
-
-        if data != self.instance.activation_code:
-            raise ValidationError(
-                _('The validation code supplied by you does not match.')
-            )
-
-        return data
-
-    user_activation_code = forms.CharField(
-        label=_("Activation code"), max_length=40
-    )
-
-
 class UserUpdateForm(forms.ModelForm):
     """
     Form for updating subscription information/unsubscribing as a logged-in
