@@ -1,6 +1,5 @@
 import logging
 import time
-import django
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -16,8 +15,6 @@ from django.utils.translation import ugettext
 from django.utils.timezone import now
 
 from sorl.thumbnail import ImageField
-from distutils.version import LooseVersion
-
 
 from .compat import get_context, reverse
 from .utils import (
@@ -141,7 +138,7 @@ class Newsletter(models.Model):
         )
 
     def get_sender(self):
-        return get_address(self.sender, self.email)
+        return u'%s <%s>' % (self.sender, self.email)
 
     def get_subscriptions(self):
         logger.debug(u'Looking up subscribers for %s', self)
@@ -245,6 +242,7 @@ class Subscription(models.Model):
     def save(self, *args, **kwargs):
         """
         Perform some basic validation and state maintenance of Subscription.
+
         TODO: Move this code to a more suitable place (i.e. `clean()`) and
         cleanup the code. Refer to comment below and
         https://docs.djangoproject.com/en/dev/ref/models/instances/#django.db.models.Model.clean
@@ -344,7 +342,10 @@ class Subscription(models.Model):
         unique_together = ('user', 'email_field', 'newsletter')
 
     def get_recipient(self):
-        return get_address(self.name, self.email)
+        if self.name:
+            return u'%s <%s>' % (self.name, self.email)
+
+        return u'%s' % (self.email)
 
     def send_activation_email(self, action):
         assert action in ACTIONS, 'Unknown action: %s' % action
@@ -433,9 +434,8 @@ class Article(models.Model):
     title = models.CharField(max_length=200, verbose_name=_('title'))
     text = models.TextField(verbose_name=_('text'))
 
-    url = models.URLField(
-        verbose_name=_('link'), blank=True, null=True
-    )
+    url = models.URLField(verbose_name=_('link'), blank=True, null=True)
+    url_title = models.CharField(max_length=20, verbose_name=_('url_title'), blank=True, null=True)
 
     # Make this a foreign key for added elegance
     image = ImageField(
@@ -732,13 +732,3 @@ class Submission(models.Model):
         default=False, verbose_name=_('sending'),
         db_index=True, editable=False
     )
-
-def get_address(name, email):
-    # Converting name to ascii for compatibility with django < 1.9.
-    # Remove this when django 1.8 is no longer supported.
-    if LooseVersion(django.get_version()) < LooseVersion('1.9'):
-        name = name.encode('ascii', 'ignore').decode('ascii').strip()
-    if name:
-        return u'%s <%s>' % (name, email)
-    else:
-        return u'%s' % email
